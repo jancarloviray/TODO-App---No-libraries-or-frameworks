@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+<title>TODO - USING VANILLA JAVASCRIPT</title>
+<style>
+body {
+  font-family: 'Helvetica';
+  line-height: 1em;
+}
+
+#main {
+  width: 400px;
+  margin: auto;
+  padding-top: 100px;
+}
+
+
+
+#todo-list {
+  list-style-type: square;
+}
+
+#todo-list li {
+  position: relative;
+  margin: 0;
+  padding-bottom: 5px;
+  left: 0;
+}
+
+.todo-item-text {
+  font-family: 'Tahoma'
+}
+
+.todo-item-op {
+  font-size: .7em;
+  padding-bottom: 5px;
+  font-weight: bold;
+}
+</style>
+</head>
+<body>
+  <div id='main'>
+    
+    <header>
+      <h1>TODO</h1>
+      <h2>no libraries used</h2>
+    </header>
+    
+    <div id='todo-add'>
+      <input id='add-todo-text' type='text' placeholder='what to do next?'/>
+      <button id='btn-add-todo'>+</button>
+    </div>
+    
+    <div>
+      <ul id='todo-list'>
+        <li data-todo-id='0'>
+          <div class='todo-item-text' >
+            sample todo
+          </div>
+          <div class='todo-item-op'>
+              <span id='edit-todo'>edit</span>
+              <span id='delete-todo'>delete</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+    
+    <div>
+      <p id='todo-stat'>there are {3} uncompleted tasks left</p>
+    </div>
+    
+    <footer>
+      <p>jancarloviray.com</p>
+    </footer>
+    
+  </div>
+  
+  <script>
+	  //two methods:
+	  // -- data-driven, where crud modifies todos collection & there is a 'refreshAll' operation that modifies the UI, stats, and etc... DOWNSIDE is performance.. because every edit/delete/(add) will cause a full refresh... UPSIDE is maintainability...
+	  // -- 
+	  
+	  (function(){
+		  
+		  //setup storage and variables
+		  var todos = [];
+		  
+		  //temp test data...
+		  todos.push( new Todo( 0,'get milk' ) );
+		  todos.push( new Todo( 1,'get books' ) );
+		  todos.push( new Todo( 2,'get money' ) );
+		  
+		  //setup entities
+		  function Todo(id, title){
+			  this.id = id;
+			  this.title = title;
+			  this.done = false;
+		  }
+		  
+		  //add event listeners
+		  var addTodoBtn = document.getElementById( 'btn-add-todo' );
+		  var addTodoInput = document.getElementById( 'add-todo-text' );
+		  addTodoBtn.addEventListener( 'click', addTodoHandler );
+		  addTodoInput.addEventListener( 'keypress', function( evt ){ 
+			  console.log(evt);
+			  if( evt.keyCode == 13 ) addTodoHandler(); 
+		  } );
+		  
+		  function addTodoHandler(){
+			  var todoText = document.getElementById( 'add-todo-text' );
+			  var newId = todos.length;
+			  todos.push( new Todo( newId, todoText.value ) );
+			  todoText.value = "";
+			  refreshAll();
+		  }
+		  
+		  function editTodoHandler( evt ){
+			  
+			  var el = evt.srcElement,
+			  parent = evt.srcElement.parentElement,
+			  todoItemId = null;
+			  
+			  while( !parent.getAttribute( 'data-todo-id' ) ){
+				  parent = parent.parentElement;
+			  }
+			  
+			  todoItemId = parent.getAttribute( 'data-todo-id' );
+			  console.log( todoItemId );
+			  
+			  //edit stuff... use alert maybe
+			  console.log( todos[todoItemId] );
+			  
+			  var title = prompt('edit',todos[todoItemId].title);
+			  
+			  //when user cancels, title == null; we don't want that.
+			  todos[todoItemId].title = title ? title : todos[todoItemId].title;
+			  
+			  refreshAll();
+			  
+		  }
+		  
+		  function deleteTodoHandler( evt ){
+			  
+			  var el = evt.srcElement,
+			  parent = evt.srcElement.parentElement,
+			  todoItemId = null;
+			  
+			  //..would not need to put this loop if data-attribute is on 'delete' span
+			  while( !parent.getAttribute( 'data-todo-id' ) ){
+				  parent = parent.parentElement;
+			  }
+			  
+			  todoItemId = parent.getAttribute( 'data-todo-id' );
+			  console.log( todoItemId );
+			  
+			  todos.splice(todoItemId,1);
+			  
+			  refreshAll();
+			  
+		  }
+		  
+		  function refreshAll(){
+			  
+			  //clear entire list
+			  document.getElementById('todo-list').innerHTML = "";
+			  
+			  todos.forEach( function( item, index, list ){
+				  
+				  //create LI attr:data-todo-id
+				  var htmlLI = document.createElement( 'li' );
+				  htmlLI.setAttribute( 'data-todo-id', index );
+				  
+				  //create DIV.todo-item-text
+				  var htmlDIVtext = document.createElement( 'div' );
+				  htmlDIVtext.className = 'todo-item-text';
+				  var todoTextNode = document.createTextNode(item.title);
+				  htmlDIVtext.appendChild(todoTextNode);
+				  
+				  //create DIV.todo-item-op
+				  var htmlDIVops = document.createElement( 'div' );
+				  htmlDIVops.className = 'todo-item-op';
+				  
+				  var htmlSPANedit = document.createElement( 'span' );
+				  htmlSPANedit.id = 'edit-todo';
+				  htmlSPANedit.appendChild(document.createTextNode('edit '));
+				  
+				  var htmlSPANdel = document.createElement( 'span' );
+				  htmlSPANdel.id = 'delete-todo';
+				  htmlSPANdel.appendChild(document.createTextNode('delete'));
+				  
+				  //add SPANS to DIV
+				  htmlDIVops.appendChild(htmlSPANedit);
+				  htmlDIVops.appendChild(htmlSPANdel);
+				  
+				  //appends
+				  htmlLI.appendChild(htmlDIVtext);
+				  htmlLI.appendChild(htmlDIVops);
+				  document.getElementById('todo-list').appendChild(htmlLI);
+				  
+				  //ADD EVENT BASED ON SPECIFIC ELEMENT ON THE LOOP, INSTEAD OF OVERALL!
+				  //SEE THAT TARGET IS THAT SPECIFIC LI INSTEAD OF ALL LI... how?
+				  //it's like .find() method in jQuery... unfortunately, javascript has no
+				  //getElementById on elements (only on document.getElem...) so I have
+				  //to create this for-loop
+				  
+				  //by the way, don't create functions within loops, because that would create
+				  //multiple similar functions === bad for memory & performance.
+				  
+				  for ( var x = 0; x < htmlLI.getElementsByTagName('span').length; x++ ) {
+					  var currentSPANel = htmlLI.getElementsByTagName('span')[x];
+					  
+					  if( currentSPANel.id === 'edit-todo' ){
+						  currentSPANel.addEventListener('click',editTodoHandler);
+					  } else if ( currentSPANel.id === 'delete-todo' ){
+						  currentSPANel.addEventListener('click',deleteTodoHandler);
+					  }
+					  
+				  }
+				  
+				  updateStats();
+				  
+			  });
+		  }
+		  
+		  function updateStats(){
+			  
+			  console.log(todos.length);
+			  
+			  document.getElementById('todo-stat').innerHTML =
+			  "there are "+todos.length+" uncompleted item(s) left";
+			  
+		  }
+		  
+		  refreshAll();
+		  
+		  
+	  })();
+  </script>
+</body>
+</html>
